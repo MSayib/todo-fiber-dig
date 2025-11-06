@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  # Go Application Service
+  app:
+    build: .
+    container_name: todo-app
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app  # Mount source code for live reload
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - todonetwork
+
+  # PostgreSQL Service
+  postgres:
+    image: postgres:latest
+    container_name: todo-postgres
+    environment:
+      POSTGRES_USER: ${PG_USERNAME}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DATABASE}
+    ports:
+      - "5433:5432" # Map ke port 5433 di host agar tidak konflik
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - todonetwork
+
+  # Redis Service
+  redis:
+    image: redis:8.2.1-alpine
+    container_name: todo-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD} --user ${REDIS_USERNAME} on >${REDIS_PASSWORD} +@all
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - todonetwork
+
+networks:
+  todonetwork:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
